@@ -57,7 +57,7 @@ def main(args):
     if 'pEA' in args.output.split(","):
         pEA_pl = pl.from_pandas(pEA_mat)
         pEA_pl.insert_column(0, pl.from_pandas(pEA_mat.index).alias("sample"))
-        pEA_pl.write_csv(args.savepath+f'/{args.prefix}pEA_mat.tsv', separator='\t', float_precision=2)
+        pEA_pl.write_csv(args.savepath+f'/{args.prefix}pEA_mat.tsv', separator='\t', float_precision=4)
     if 'sumEA' in args.output.split(","):
         sumEA_pl = pl.from_pandas(sumEA_mat)
         sumEA_pl.insert_column(0, pl.from_pandas(sumEA_mat.index).alias("sample"))
