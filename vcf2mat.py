@@ -4,14 +4,14 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 import argparse
 from vcf import *
-import random
+import polars as pl
 
 
 def parse_args():
     """
     Parses the arguments.
     """
-    parser = argparse.ArgumentParser(description="vcf2mat arguments")
+    parser = argparse.ArgumentParser(description="Mu arguments")
     parser.add_argument('--VCF', nargs='?', default='./',help='Location of Cohort VCF')
     parser.add_argument('--samples', nargs='?', default='./samples.txt',help='samples file path')
     parser.add_argument('--GeneLength', nargs='?', default='./refs/gene_length.csv',help='gene length file path')
@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--cores', type=int, default=1, help='number of CPUs to use for multiprocessing')
     parser.add_argument('--chrX', type=int,default=1, help='1 if there is sex chromosome in the VCF, 0 if there is no sex chromosome in the VCF')
     parser.add_argument('--prefix', nargs='?', default='',help='prefix to output files')
+    parser.add_argument('--output', nargs='?', default='pEA,sumEA,maxEA', help='matrices to output, separate by ,')
     return parser.parse_args()
 
 
@@ -49,17 +50,22 @@ def main(args):
     if args.Ann=='VEP':
         results = Parallel(n_jobs=args.cores)(delayed(vep_to_mat)(args.VCF, gene, ref.loc[gene], total_samples, max_af=args.maxaf, min_af=args.minaf) for gene in tqdm(ref.index.unique()))
 
-    sumEA_mat_output = pd.concat([result[0] for result in results], axis=1)
-    maxEA_mat_output = pd.concat([result[1] for result in results], axis=1)
-    pEA_mat_output = pd.concat([result[2] for result in results], axis=1)
-
-    sumEA_mat_output.to_csv(args.savepath+f'/{args.prefix}sumEA_mat.tsv', sep='\t', header=True, index=True,
-                     index_label="sample")
-    maxEA_mat_output.to_csv(args.savepath+f'/{args.prefix}maxEA_mat.tsv', sep='\t', header=True, index=True,
-                     index_label="sample")
-    pEA_mat_output.to_csv(args.savepath+f'/{args.prefix}pEA_mat.tsv', sep='\t', header=True, index=True,
-                     index_label="sample")
-
+    sumEA_mat = pd.concat([result[0] for result in results], axis=1)
+    maxEA_mat = pd.concat([result[1] for result in results], axis=1)
+    pEA_mat = pd.concat([result[2] for result in results], axis=1)
+    
+    if 'pEA' in args.output.split(","):
+        pEA_pl = pl.from_pandas(pEA_mat)
+        pEA_pl.insert_column(0, pl.from_pandas(pEA_mat.index).alias("sample"))
+        pEA_pl.write_csv(args.savepath+f'/{args.prefix}pEA_mat.tsv', separator='\t', float_precision=2)
+    if 'sumEA' in args.output.split(","):
+        sumEA_pl = pl.from_pandas(sumEA_mat)
+        sumEA_pl.insert_column(0, pl.from_pandas(sumEA_mat.index).alias("sample"))
+        sumEA_pl.write_csv(args.savepath+f'/{args.prefix}sumEA_mat.tsv', separator='\t', float_precision=2)
+    if 'maxEA' in args.output.split(","):
+        maxEA_pl = pl.from_pandas(maxEA_mat)
+        maxEA_pl.insert_column(0, pl.from_pandas(maxEA_mat.index).alias("sample"))
+        maxEA_pl.write_csv(args.savepath+f'/{args.prefix}maxEA_mat.tsv', separator='\t', float_precision=2)
 
 if __name__ == "__main__":
     args = parse_args()
