@@ -69,17 +69,17 @@ def main(args):
         sumEA_pl = sumEA_pl.with_columns(pl.all().round(4))
         sumEA_pl.insert_column(0, pl.from_pandas(sumEA_mat.index).alias("sample"))
         if args.format == "tsv":
-            pEA_pl.write_csv(args.savepath+f'/{args.prefix}sumEA_mat.tsv', separator='\t', float_precision=4)
+            sumEA_pl.write_csv(args.savepath+f'/{args.prefix}sumEA_mat.tsv', separator='\t', float_precision=4)
         else:
-            pEA_pl.write_parquet(args.savepath+f'/{args.prefix}sumEA_mat.parquet')
+            sumEA_pl.write_parquet(args.savepath+f'/{args.prefix}sumEA_mat.parquet')
     if 'maxEA' in args.output.split(","):
         maxEA_pl = pl.from_pandas(maxEA_mat)
         maxEA_pl = maxEA_pl.with_columns(pl.all().round(4))
         maxEA_pl.insert_column(0, pl.from_pandas(maxEA_mat.index).alias("sample"))
         if args.format == "tsv":
-            pEA_pl.write_csv(args.savepath+f'/{args.prefix}maxEA_mat.tsv', separator='\t', float_precision=4)
+            maxEA_pl.write_csv(args.savepath+f'/{args.prefix}maxEA_mat.tsv', separator='\t', float_precision=4)
         else:
-            pEA_pl.write_parquet(args.savepath+f'/{args.prefix}maxEA_mat.parquet')
+            maxEA_pl.write_parquet(args.savepath+f'/{args.prefix}maxEA_mat.parquet')
 
 if __name__ == "__main__":
     args = parse_args()
