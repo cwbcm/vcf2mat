@@ -236,6 +236,8 @@ def vep_to_mat(vcf_fn, gene, gene_ref, samples, max_af, min_af, af_field='AF'):
     sumEA_mat = pd.DataFrame(np.zeros((len(samples), 1)), index=samples, columns=[gene])
     maxEA_mat = pd.DataFrame(np.zeros((len(samples), 1)), index=samples, columns=[gene])
     pEA_mat = pd.DataFrame(np.ones((len(samples), 1)), index=samples, columns=[gene])
+    silent_mat = pd.DataFrame(np.zeros((len(samples), 1)), index=samples, columns=[gene])
+    
     for var in vcf:
         if re.search(r'chr', var.chrom):
             contig = 'chr' + str(gene_ref.chrom)
@@ -258,6 +260,9 @@ def vep_to_mat(vcf_fn, gene, gene_ref, samples, max_af, min_af, af_field='AF'):
         rec_gene = _fetch_anno(rec.info['SYMBOL'])
         ea = fetch_EA_VEP(all_ea, canon_ensp, all_ensp, csq)
         pass_af_check = af_check(rec, af_field="AF", max_af=max_af, min_af=min_af)
+        if csq == 'synonymous_variant' and gene == rec_gene and pass_af_check:
+            gts = pd.Series([convert_zygo(rec.samples[sample]['GT']) for sample in samples], index=samples, dtype=int)
+            silent_mat[gene] += gts
         if not np.isnan(ea).all() and gene == rec_gene and pass_af_check:
             gts = pd.Series([convert_zygo(rec.samples[sample]['GT']) for sample in samples], index=samples, dtype=int)
             maxEA_mat[gene] = np.maximum(maxEA_mat[gene], ea * (gts > 0))
@@ -270,5 +275,5 @@ def vep_to_mat(vcf_fn, gene, gene_ref, samples, max_af, min_af, af_field='AF'):
             else:
                 pEA(pEA_mat, ea, gts, cutoff, gene)
     pEA_mat = 1 - pEA_mat
-    return sumEA_mat, maxEA_mat, pEA_mat
+    return sumEA_mat, maxEA_mat, pEA_mat, silent_mat
 

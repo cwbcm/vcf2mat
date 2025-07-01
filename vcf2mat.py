@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--cores', type=int, default=1, help='number of CPUs to use for multiprocessing')
     parser.add_argument('--chrX', type=int,default=1, help='1 if there is sex chromosome in the VCF, 0 if there is no sex chromosome in the VCF')
     parser.add_argument('--prefix', nargs='?', default='',help='prefix to output files')
-    parser.add_argument('--output', nargs='?', default='pEA,sumEA,maxEA', help='matrices to output, separate by ,')
+    parser.add_argument('--output', nargs='?', default='pEA,sumEA,maxEA,silent', help='matrices to output, separate by ,')
     parser.add_argument('--format', default='tsv', choices=('tsv', 'parquet'), help='output format of the matrices')
     return parser.parse_args()
 
@@ -54,6 +54,7 @@ def main(args):
     sumEA_mat = pd.concat([result[0] for result in results], axis=1)
     maxEA_mat = pd.concat([result[1] for result in results], axis=1)
     pEA_mat = pd.concat([result[2] for result in results], axis=1)
+    silent_mat = pd.concat([result[3] for result in results], axis=1)
     
     if 'pEA' in args.output.split(","):
         pEA_pl = pl.from_pandas(pEA_mat)
@@ -72,6 +73,7 @@ def main(args):
             sumEA_pl.write_csv(args.savepath+f'/{args.prefix}sumEA_mat.tsv', separator='\t', float_precision=4)
         else:
             sumEA_pl.write_parquet(args.savepath+f'/{args.prefix}sumEA_mat.parquet')
+
     if 'maxEA' in args.output.split(","):
         maxEA_pl = pl.from_pandas(maxEA_mat)
         maxEA_pl = maxEA_pl.with_columns(pl.all().round(4))
@@ -80,6 +82,15 @@ def main(args):
             maxEA_pl.write_csv(args.savepath+f'/{args.prefix}maxEA_mat.tsv', separator='\t', float_precision=4)
         else:
             maxEA_pl.write_parquet(args.savepath+f'/{args.prefix}maxEA_mat.parquet')
+
+    if 'silent' in args.output.split(","):
+        silent_pl = pl.from_pandas(silent_mat)
+        silent_pl = silent_pl.with_columns(pl.all().round(4))
+        silent_pl.insert_column(0, pl.from_pandas(silent_mat.index).alias("sample"))
+        if args.format == "tsv":
+            silent_pl.write_csv(args.savepath+f'/{args.prefix}silent_mat.tsv', separator='\t', float_precision=4)
+        else:
+            silent_pl.write_parquet(args.savepath+f'/{args.prefix}silent_mat.parquet')
 
 if __name__ == "__main__":
     args = parse_args()
