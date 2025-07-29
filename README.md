@@ -13,32 +13,34 @@ Required arguments:
 | Argument                | Descripion |
 | ---------------------- |--------------------- |
 | --VCF                | Path to annotated VCF file |
-| --samples            |Path to file with sample IDs. There should be no header row |
-| --maxaf  | Sets maximum allele frequency threshold, so mu will be calculated for variants with frequency less than this threshold |
 | --savepath           | Path for output file |
+| --maxaf  | Sets maximum allele frequency threshold |
+| --minaf  | Sets minimum allele frequency threshold |
 | --cores              | Number of cpus to use |
+| --output | Specify what EA matrices to output, use , to separate the outputs. E.g. sumEA,pEA,silent,maxEA |
+| --format | Specify output file format (options: tsv, parquet). Parquet is recommended |
 
 Optional arguments:
 | Argument                 | Descripion |
 | ---------------------- |--------------------- |
-| --Ann      | Variant annotation pipeline used (options: ANNOVAR, VEP / default: VEP) |
+| --Ann      | Variant annotation pipeline used (options: ANNOVAR, VEP / default: VEP). Only VEP is currently supported |
 | --ref      | Genome reference (options: hg19, hg38 / default: hg38) |
-| --GeneLength      | Path to gene length file. ( default: ./refs/gene_length.csv) |
-| --chrX       | Whether to include (1) or exclude (0) sex chromosomes in analysis (options: 1, 0 / default: 1 )|
+| --prefix   | Optional prefix to add before the EA matrices. If unspecified, sumEA_mat.parquet/tsv will be used |
+
 
 
 
 ## Command line example
 ```bash
-#set your working directory to mu_calculator
+#set your working directory to vcf2mat
 cd ./vcf2mat
 #run vcf2mat.py
-python vcf2mat.py --VCF Path/to/vcf_file.vcf.gz --samples Path/to/samples_file.csv --savepath save/directory/ --cores 20 --maxaf 0.01 --chrX 0
+python vcf2mat.py --VCF Path/to/vcf_file.vcf.gz --ref hg38 --savepath save/directory/ --cores 20 --maxaf 0.01 --format parquet
 ```
 
 ## Output
-1. Output "mu.tsv" is a dataframe with gene names in the first column, mu of the cases in the second column and mu of the controls in the third column.
-2. Output "distance_matrix.tsv" is a dataframe with gene names in the first column and distance (mu_control - mu_case) in the second column. The difference in mu for controls and cases for 1000 random shuffled labels are presented in column names "1" to "1000" and z-scores are presented in the last column.
-
+1. EA matrices (sumEA, pEA, maxEA or silent) for a given EA annotated vcf file. The genes are on the columns, while the samples are on the rows.
+2. All samples in the vcf file will be included in the output. If only interested in a subset of samples, subset the vcf files first with bcftools.
+3. Use custom reference files when only a subset of gene is of interest.
 
 

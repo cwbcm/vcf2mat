@@ -255,6 +255,7 @@ def vep_to_mat(vcf_fn, gene, gene_ref, samples, max_af, min_af, af_field='AF'):
     for rec in vcf.fetch(contig=contig, start=gene_ref.start, stop=gene_ref.end):
         all_ea = rec.info.get('EA', (None,))
         all_ensp = rec.info.get('Ensembl_proteinid', (rec.info['ENSP'][0],))
+        # Fetch ENSP annotation (canonical) from INFO field
         canon_ensp = _fetch_anno(rec.info['ENSP'])
         csq = _fetch_anno(rec.info['Consequence'])
         rec_gene = _fetch_anno(rec.info['SYMBOL'])
